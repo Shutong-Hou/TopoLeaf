@@ -1,0 +1,14 @@
+torch>=2.0.0
+torchvision>=0.15.0
+numpy
+opencv-python
+matplotlib
+scikit-learn
+scipy
+ripser
+persim
+umap-learn
+pandas
+streamlit
+Pillow
+open-clip-torch

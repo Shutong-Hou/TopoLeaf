@@ -1,0 +1,37 @@
+{
+  "Apple_Strawberry": {
+    "geo_only": 0.9933684210526316,
+    "topo_only": 0.7871578947368422,
+    "fusion_equal": 0.9438947368421052,
+    "fusion_gated": 0.9858947368421054,
+    "fusion_confident": 0.9885263157894737
+  },
+  "Apple_Corn_(maize)": {
+    "geo_only": 0.16896666666666665,
+    "topo_only": 0.22769999999999999,
+    "fusion_equal": 0.1524,
+    "fusion_gated": 0.15846666666666667,
+    "fusion_confident": 0.16223333333333334
+  },
+  "Corn_(maize)_Apple": {
+    "geo_only": 0.2206,
+    "topo_only": 0.5416666666666666,
+    "fusion_equal": 0.3308333333333333,
+    "fusion_gated": 0.22306666666666666,
+    "fusion_confident": 0.2363
+  },
+  "Apple_Tomato": {
+    "geo_only": 0.8033221099887766,
+    "topo_only": 0.6933221099887766,
+    "fusion_equal": 0.7627833894500561,
+    "fusion_gated": 0.7942312008978676,
+    "fusion_confident": 0.7974298540965208
+  },
+  "Corn_(maize)_Tomato": {
+    "geo_only": 0.8374635241301909,
+    "topo_only": 0.4750280583613917,
+    "fusion_equal": 0.7164983164983165,
+    "fusion_gated": 0.8287317620650954,
+    "fusion_confident": 0.8344444444444444
+  }
+}
