@@ -148,9 +148,17 @@ TEXTS = {
 @st.cache_resource
 def load_dino():
     import warnings
+    import os
     warnings.filterwarnings("ignore")
-    local = os.path.join(os.path.expanduser("~"), ".cache", "torch", "hub", "facebookresearch_dinov2_main")
-    model = torch.hub.load(local, 'dinov2_vits14', source='local', pretrained=True).to(DEVICE)
+    local_dir = os.path.join(
+        os.path.expanduser("~"), 
+        ".cache", "torch", "hub", "facebookresearch_dinov2_main"
+    )
+    # 如果本地有 DINOv2 源码，优先本地加载，否则在线下载
+    if os.path.exists(local_dir):
+        model = torch.hub.load(local_dir, 'dinov2_vits14', source='local', pretrained=True).to(DEVICE)
+    else:
+        model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14', pretrained=True).to(DEVICE)
     model.eval()
     return model
 
