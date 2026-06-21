@@ -2,7 +2,7 @@
 
 **零样本 · 开放集 · 跨物种植物病害异常检测**
 
-[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://your-demo-link.streamlit.app)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://topoleaf.streamlit.app/)
 [![DOI](https://zenodo.org/badge/DOI/xxxxx/xxxxx.svg)](https://doi.org/xxxxx/xxxxx)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 [![Email](https://img.shields.io/badge/Email-praxel.cn%40gmail.com-blue)](mailto:praxel.cn@gmail.com)
@@ -47,8 +47,12 @@
 
 ## 🎥 在线体验
 
-本地运行即可获得完整交互 Demo：
+## 🎥 在线体验
 
+**云端轻量版**（仅 Apple 基准 + 几何评分 + 热力图）：  
+👉 [![Streamlit Cloud](https://img.shields.io/badge/Demo-Cloud_Lightweight-brightgreen)](https://topoleaf.streamlit.app/)
+
+**本地完整版**（几何+拓扑双评分、UMAP 定位、邻居搜索、跨物种矩阵等）： 
 ```bash
 streamlit run app.py
 ```
@@ -70,6 +74,8 @@ git clone https://github.com/Shutong-Hou/TopoLeaf.git
 cd TopoLeaf
 pip install -r requirements.txt
 ```
+- `app.py` → 云端轻量版，无需本地缓存  
+- `app_local.py` → 本地完整版，需先运行 `precompute_final.py` 生成缓存
 
 ### 数据集准备
 
@@ -123,6 +129,7 @@ streamlit run app.py
 ```
 TopoLeaf/
 ├── app.py                      # Streamlit Demo
+├── app_local.py                # 本地完整版，需先运行 `precompute_final.py` 生成缓存
 ├── precompute_final.py         # 预计算缓存生成
 ├── generate_assets.py          # 生成演示素材
 ├── requirements.txt            # Python 依赖
