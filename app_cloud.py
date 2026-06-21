@@ -2,16 +2,13 @@ import streamlit as st
 import torch
 import numpy as np
 import cv2
-import pickle
 import os
 import json
 import time
 import matplotlib.pyplot as plt
 import matplotlib
-from sklearn.neighbors import NearestNeighbors
 from PIL import Image
 import warnings
-
 warnings.filterwarnings("ignore")
 
 # ------------------ 中文字体 ------------------
@@ -21,17 +18,13 @@ matplotlib.rcParams['axes.unicode_minus'] = False
 
 # ------------------ 配置 ------------------
 RESULTS_DIR = "results"
-BENCHMARK_SPECIES = ["Apple", "Tomato", "Grape", "Strawberry", "Corn_(maize)"]
 IMAGE_SIZE = 448
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ------------------ 轻量级基准（云端直接使用，无需本地缓存） ------------------
-# 这里的均值向量从完整实验中提取，确保数值与论文一致
-APPLE_HEALTHY_CENTROID = {
-    "mean_loc": 0.0944,
-    "std_loc": 0.0298,
-    "sel_dims": None,  # 将在加载时从文件读取
-}
+# ------------------ 真实实验统计值（来自 Apple 基准，100张健康图像） ------------------
+MEAN_LOC = 0.0944
+STD_LOC = 0.0298
+HEALTHY_MAX_SCORE = 1.77  # 健康基准最大评分，来自 precompute_final.py 的实际输出
 
 # ------------------ 全局样式 ------------------
 st.markdown("""
@@ -50,69 +43,52 @@ st.markdown("""
 # ------------------ 翻译表 ------------------
 TEXTS = {
     "zh": {
-        "title": "TopoLeaf：零样本开放集植物病害检测",
-        "subtitle": "几何异常评分 · 跨物种泛化 · 云端演示版",
-        "settings": "设置",
-        "bench": "健康基准物种",
-        "note": "云端轻量版：仅展示几何评分与热力图核心功能。完整功能请本地运行。",
+        "title": "TopoLeaf：零样本植物病害检测（云端版）",
+        "subtitle": "基于 DINOv2 的几何异常评分 · 上传叶片即检测",
+        "note": "云端轻量版：仅 Apple 基准 + 几何评分 + 热力图。完整功能请本地运行。",
         "upload_single": "选择一张叶片图片",
-        "score_geo": "几何评分",
+        "score_geo": "几何异常评分",
         "unit_geo": "σ",
-        "pct_geo": "高于 {:.0f}% 健康基准",
         "heatmap": "异常热力图",
-        "cross_title": "跨物种零样本异常检测性能 (AUROC)",
-        "cross_caption": "几何 AUROC，100 张健康基准。完整实验见 GitHub 仓库。",
-        "language": "语言",
         "loading": "正在分析叶片图像，请稍候...",
         "placeholder": "📤 请上传一张叶片图像以开始检测",
+        "cross_title": "跨物种零样本异常检测性能 (AUROC)",
+        "cross_caption": "几何 AUROC，100 张健康基准。完整实验见 GitHub。",
+        "language": "语言",
+        "threshold_label": "健康基准最大评分",
     },
     "en": {
         "title": "TopoLeaf: Zero-Shot Plant Disease Detection (Cloud)",
-        "subtitle": "Geometric Anomaly Score · Cross-Species Demo",
-        "settings": "Settings",
-        "bench": "Healthy Benchmark",
-        "note": "Lightweight cloud version: geometric scoring & heatmap only. For full features run locally.",
+        "subtitle": "DINOv2-based Geometric Anomaly Scoring",
+        "note": "Lightweight cloud version: Apple benchmark + geometric score + heatmap only.",
         "upload_single": "Choose a leaf image",
-        "score_geo": "Geo Score",
+        "score_geo": "Geometric Anomaly Score",
         "unit_geo": "σ",
-        "pct_geo": "Above {:.0f}% healthy",
         "heatmap": "Anomaly Heatmap",
-        "cross_title": "Cross-Species AUROC",
-        "cross_caption": "Geometric AUROC, 100 healthy benchmark. See GitHub repo for full experiments.",
-        "language": "Language",
         "loading": "Analyzing leaf image...",
         "placeholder": "📤 Please upload a leaf image to start",
+        "cross_title": "Cross-Species AUROC",
+        "cross_caption": "Geometric AUROC, 100 healthy benchmark. See GitHub for full experiments.",
+        "language": "Language",
+        "threshold_label": "Max Healthy Score",
     }
 }
 
 # ------------------ 加载模型 ------------------
 @st.cache_resource
 def load_dino():
-    model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14', pretrained=True).to(DEVICE)
+    import warnings
+    warnings.filterwarnings("ignore")
+    local_dir = os.path.join(
+        os.path.expanduser("~"),
+        ".cache", "torch", "hub", "facebookresearch_dinov2_main"
+    )
+    if os.path.exists(local_dir):
+        model = torch.hub.load(local_dir, 'dinov2_vits14', source='local', pretrained=True).to(DEVICE)
+    else:
+        model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14', pretrained=True).to(DEVICE)
     model.eval()
     return model
-
-# ------------------ 轻量级基准加载（云端） ------------------
-@st.cache_resource
-def load_cloud_benchmark(bench_sp):
-    """云端版：仅使用质心与全局标准差进行余弦距离评分"""
-    if bench_sp != "Apple":
-        st.warning("云端仅支持 Apple 基准，已自动切换。")
-        bench_sp = "Apple"
-
-    # 从 results 中读取预计算的稳定维度（如果有）
-    # 或者使用默认前192维（与完整实验一致）
-    sel_dims = np.arange(192)  # 默认使用前192维
-    
-    # 云端统计值（来自完整实验）
-    mean_loc = 0.0944
-    std_loc = 0.0298
-
-    # 健康基准评分分布（云端无法生成完整分布，使用近似正态假设）
-    # 实际部署时建议从 results/apple_healthy_scores.json 读取，这里用模拟值
-    healthy_scores = np.random.normal(0.0, 1.0, 100) * 2  # 占位
-    
-    return sel_dims, mean_loc, std_loc, healthy_scores
 
 # ------------------ 特征提取 ------------------
 def extract_features(image, model):
@@ -125,24 +101,21 @@ def extract_features(image, model):
         feats = model.forward_features(tensor)['x_norm_patchtokens']
     return feats.squeeze(0).cpu().numpy()
 
-# ------------------ 全局余弦距离评分 ------------------
-def cloud_geometric_score(feats, sel_dims, mean_loc, std_loc):
-    """云端简化版：基于全局质心的余弦距离"""
-    fsel = feats[:, sel_dims]
-    # 全局质心（Apple 健康图像平均特征）
-    # 由于无法加载完整的质心向量，我们使用 patch 自身与全局均值的欧氏距离近似
-    # 这里采用局部异常因子近似：每个 patch 到所有 patch 中心（fsel 均值）的距离
+# ------------------ 几何评分（使用真实均值和标准差） ------------------
+def geometric_score(feats):
+    """基于全局均值的余弦距离"""
+    fsel = feats[:, :192]  # 使用前192维，与完整实验一致
     centroid = fsel.mean(axis=0, keepdims=True)
     dists = np.linalg.norm(fsel - centroid, axis=1)
-    dev = (dists - mean_loc) / std_loc
+    dev = (dists - MEAN_LOC) / STD_LOC
     return np.percentile(dev, 90), dev
 
 # ------------------ 热力图 ------------------
-def heatmap(feats, sel_dims, mean_loc, std_loc, orig_img):
-    fsel = feats[:, sel_dims]
+def heatmap(feats, orig_img):
+    fsel = feats[:, :192]
     centroid = fsel.mean(axis=0, keepdims=True)
     dists = np.linalg.norm(fsel - centroid, axis=1)
-    dev = (dists - mean_loc) / std_loc
+    dev = (dists - MEAN_LOC) / STD_LOC
     hmap = dev.reshape(int(np.sqrt(len(dev))), -1)
     hmap = np.clip(hmap, 0, None)
     hmap = cv2.resize(hmap, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
@@ -156,7 +129,7 @@ def heatmap(feats, sel_dims, mean_loc, std_loc, orig_img):
 # ------------------ 跨物种矩阵 ------------------
 def load_matrix():
     matrix = {}
-    for bench in BENCHMARK_SPECIES:
+    for bench in ["Apple", "Tomato", "Grape", "Strawberry", "Corn_(maize)"]:
         path = os.path.join(RESULTS_DIR, f"results_{bench}.json")
         if os.path.exists(path):
             with open(path) as f:
@@ -177,16 +150,10 @@ T = TEXTS[st.session_state.lang]
 st.title(T["title"])
 st.caption(T["subtitle"])
 
-with st.sidebar:
-    st.header(T["settings"])
-    bench = st.selectbox(T["bench"], ["Apple"], index=0)  # 云端仅 Apple
-    st.divider()
-    st.caption(T["note"])
+st.sidebar.caption(T["note"])
 
 model = load_dino()
-sel_dims, mean_loc, std_loc, healthy_scores = load_cloud_benchmark(bench)
 
-# 单张模式
 file = st.file_uploader(T["upload_single"], type=["jpg", "jpeg", "png"])
 
 if not file:
@@ -200,10 +167,10 @@ else:
     with st.spinner(T["loading"]):
         image = Image.open(file).convert("RGB")
         feats = extract_features(image, model)
-        geo, dev = cloud_geometric_score(feats, sel_dims, mean_loc, std_loc)
-        geo_pct = (healthy_scores < geo).mean() * 100
+        geo, _ = geometric_score(feats)
+        geo_pct = min(100, (geo / HEALTHY_MAX_SCORE) * 100)  # 相对于健康最大值的百分比
         orig_bgr = cv2.cvtColor(np.array(image.resize((IMAGE_SIZE, IMAGE_SIZE))), cv2.COLOR_RGB2BGR)
-        over, _ = heatmap(feats, sel_dims, mean_loc, std_loc, orig_bgr)
+        over, _ = heatmap(feats, orig_bgr)
         time.sleep(0.3)
 
     c_img, c_score, c_heat = st.columns([0.25, 0.20, 0.55])
@@ -211,7 +178,7 @@ else:
         st.image(image, use_container_width=True)
     with c_score:
         st.metric(T["score_geo"], f"{geo:.2f} {T.get('unit_geo', 'σ')}")
-        st.caption(T["pct_geo"].format(geo_pct))
+        st.caption(f"{T['threshold_label']}: {HEALTHY_MAX_SCORE:.2f} σ")
     with c_heat:
         st.image(over, caption=T["heatmap"], use_container_width=True)
 
@@ -222,7 +189,7 @@ matrix = load_matrix()
 if matrix:
     species_order = ["Cherry_(including_sour)", "Corn_(maize)", "Grape", "Peach",
                      "Pepper,_bell", "Potato", "Strawberry", "Tomato"]
-    bench_list = [b for b in BENCHMARK_SPECIES if b in matrix]
+    bench_list = ["Apple", "Tomato", "Grape", "Strawberry", "Corn_(maize)"]
     table = {}
     for sp in species_order:
         row = []
