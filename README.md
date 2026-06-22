@@ -47,8 +47,6 @@
 
 ## 🎥 在线体验
 
-## 🎥 在线体验
-
 **云端轻量版**（仅 Apple 基准 + 几何评分 + 热力图）：  
 👉 [![Streamlit Cloud](https://img.shields.io/badge/Demo-Cloud_Lightweight-brightgreen)](https://topoleaf.streamlit.app/)
 
