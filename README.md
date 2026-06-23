@@ -3,7 +3,7 @@
 **零样本 · 开放集 · 跨物种植物病害异常检测**
 
 [![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://topoleaf.streamlit.app/)
-[![DOI](https://zenodo.org/badge/DOI/xxxxx/xxxxx.svg)](https://doi.org/xxxxx/xxxxx)
+[![DOI](https://)](https://doi.org/xxxxx/xxxxx)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 [![Email](https://img.shields.io/badge/Email-praxel.cn%40gmail.com-blue)](mailto:praxel.cn@gmail.com)
 
@@ -153,13 +153,13 @@ TopoLeaf/
 若您使用了本项目，请通过 Zenodo 引用：
 
 ```bibtex
-@dataset{hou2025topoleaf,
+@dataset{hou2026topoleaf,
   author       = {Shutong Hou},
-  title        = {TopoLeaf: Zero-Shot Open-Set Plant Disease Detection},
-  year         = 2025,
-  publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.xxxxxxx},
-  url          = {https://doi.org/10.5281/zenodo.xxxxxxx}
+  title        = {},
+  year         = 2026,
+  publisher    = {},
+  doi          = {},
+  url          = {}
 }
 ```
 
