@@ -3,7 +3,6 @@
 **零样本 · 开放集 · 跨物种植物病害异常检测**
 
 [![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://topoleaf.streamlit.app/)
-[![DOI](https://)](https://doi.org/xxxxx/xxxxx)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 [![Email](https://img.shields.io/badge/Email-praxel.cn%40gmail.com-blue)](mailto:praxel.cn@gmail.com)
 
@@ -144,23 +143,6 @@ TopoLeaf/
 ├── results/                    # 实验结果 JSON
 ├── benchmark_cache/            # 预计算缓存（脚本生成）
 └── features_cache/             # 特征缓存（脚本生成）
-```
-
----
-
-## 📝 引用
-
-若您使用了本项目，请通过 Zenodo 引用：
-
-```bibtex
-@dataset{hou2026topoleaf,
-  author       = {Shutong Hou},
-  title        = {},
-  year         = 2026,
-  publisher    = {},
-  doi          = {},
-  url          = {}
-}
 ```
 
 
